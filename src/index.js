@@ -12,17 +12,24 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/signup") {
       try {
-        const formData = await request.formData();
+        console.log("POST /signup hit");
 
+        const formData = await request.formData();
         const email = (formData.get("email") || "").toString().trim().toLowerCase();
         const honeypot = (formData.get("company") || "").toString().trim();
 
-        // Silently ignore likely bot submissions.
+        console.log("Parsed form data", {
+          hasEmail: !!email,
+          honeypotFilled: honeypot !== ""
+        });
+
         if (honeypot !== "") {
+          console.log("Honeypot triggered");
           return Response.redirect(new URL("/", request.url), 303);
         }
 
         if (!isValidEmail(email)) {
+          console.log("Invalid email");
           return redirectWithParam(request.url, "error", "1");
         }
 
@@ -38,7 +45,9 @@ export default {
           "",
           `Email: ${email}`,
           `Submitted: ${submittedAt}`
-        ].join("\r\n");
+        ].join("\\r\\n");
+
+        console.log("Constructing EmailMessage");
 
         const message = new EmailMessage(
           "guestlist@gildedveilco.com",
@@ -46,10 +55,21 @@ export default {
           rawMessage
         );
 
+        console.log("Sending email via binding", {
+          bindingExists: !!env.GUESTLIST_EMAIL
+        });
+
         await env.GUESTLIST_EMAIL.send(message);
+
+        console.log("Email sent successfully");
 
         return redirectWithParam(request.url, "success", "1");
       } catch (err) {
+        console.error("Signup error", {
+          message: err?.message,
+          stack: err?.stack,
+          name: err?.name
+        });
         return redirectWithParam(request.url, "error", "1");
       }
     }
@@ -67,7 +87,7 @@ function redirectWithParam(requestUrl, key, value) {
 }
 
 function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
 }
 
 function htmlResponse(html) {
@@ -100,11 +120,7 @@ function renderPage({ success, error }) {
   --error-bg:rgba(70,25,25,.85);
   --error-line:rgba(200,100,100,.45);
 }
-
-*{
-  box-sizing:border-box;
-}
-
+*{box-sizing:border-box;}
 html,body{
   margin:0;
   min-height:100%;
@@ -116,14 +132,12 @@ html,body{
     linear-gradient(180deg,#050505 0%,#0a0a0a 40%,#111111 100%);
   color:var(--ivory);
 }
-
 body{
   display:flex;
   align-items:center;
   justify-content:center;
   padding:32px;
 }
-
 .frame{
   position:relative;
   width:100%;
@@ -138,7 +152,6 @@ body{
     inset 0 0 0 1px rgba(255,255,255,.02);
   overflow:hidden;
 }
-
 .frame::before,
 .frame::after{
   content:"";
@@ -147,12 +160,10 @@ body{
   border:1px solid rgba(201,168,93,.12);
   pointer-events:none;
 }
-
 .frame::after{
   inset:34px;
   border-color:rgba(201,168,93,.08);
 }
-
 .corner{
   position:absolute;
   width:64px;
@@ -160,35 +171,10 @@ body{
   border-color:rgba(201,168,93,.35);
   pointer-events:none;
 }
-
-.corner.tl{
-  top:18px;
-  left:18px;
-  border-top:1px solid;
-  border-left:1px solid;
-}
-
-.corner.tr{
-  top:18px;
-  right:18px;
-  border-top:1px solid;
-  border-right:1px solid;
-}
-
-.corner.bl{
-  bottom:18px;
-  left:18px;
-  border-bottom:1px solid;
-  border-left:1px solid;
-}
-
-.corner.br{
-  bottom:18px;
-  right:18px;
-  border-bottom:1px solid;
-  border-right:1px solid;
-}
-
+.corner.tl{top:18px;left:18px;border-top:1px solid;border-left:1px solid;}
+.corner.tr{top:18px;right:18px;border-top:1px solid;border-right:1px solid;}
+.corner.bl{bottom:18px;left:18px;border-bottom:1px solid;border-left:1px solid;}
+.corner.br{bottom:18px;right:18px;border-bottom:1px solid;border-right:1px solid;}
 .ornament{
   position:absolute;
   width:220px;
@@ -198,17 +184,8 @@ body{
   filter:blur(.2px);
   pointer-events:none;
 }
-
-.ornament.top-left{
-  top:-110px;
-  left:-90px;
-}
-
-.ornament.bottom-right{
-  bottom:-110px;
-  right:-90px;
-}
-
+.ornament.top-left{top:-110px;left:-90px;}
+.ornament.bottom-right{bottom:-110px;right:-90px;}
 .content{
   position:relative;
   z-index:1;
@@ -221,7 +198,6 @@ body{
   padding:80px 28px;
   overflow:hidden;
 }
-
 .veil-glow{
   position:absolute;
   top:44%;
@@ -235,7 +211,6 @@ body{
   pointer-events:none;
   z-index:0;
 }
-
 .shimmer{
   position:absolute;
   inset:0;
@@ -255,37 +230,16 @@ body{
   animation:candleShimmer 9s ease-in-out infinite;
   z-index:0;
 }
-
 @keyframes candleShimmer{
-  0%{
-    transform:translateX(-120%);
-    opacity:0;
-  }
-  12%{
-    opacity:.35;
-  }
-  50%{
-    transform:translateX(120%);
-    opacity:.5;
-  }
-  100%{
-    transform:translateX(120%);
-    opacity:0;
-  }
+  0%{transform:translateX(-120%);opacity:0;}
+  12%{opacity:.35;}
+  50%{transform:translateX(120%);opacity:.5;}
+  100%{transform:translateX(120%);opacity:0;}
 }
-
-.eyebrow,
-h1,
-.divider,
-.tagline,
-.subcopy,
-.cta-wrap,
-.notice,
-.footer-note{
+.eyebrow,h1,.divider,.tagline,.subcopy,.cta-wrap,.notice,.footer-note{
   position:relative;
   z-index:1;
 }
-
 .eyebrow{
   margin:0 0 18px;
   color:var(--gold-soft);
@@ -293,7 +247,6 @@ h1,
   letter-spacing:.38em;
   text-transform:uppercase;
 }
-
 h1{
   margin:0;
   font-size:clamp(2.8rem, 8vw, 5.8rem);
@@ -302,18 +255,14 @@ h1{
   letter-spacing:.08em;
   text-transform:uppercase;
   color:var(--ivory);
-  text-shadow:
-    0 0 12px rgba(201,168,93,.25),
-    0 2px 18px rgba(0,0,0,.4);
+  text-shadow:0 0 12px rgba(201,168,93,.25),0 2px 18px rgba(0,0,0,.4);
 }
-
 .divider{
   width:140px;
   height:1px;
   margin:28px auto 26px;
   background:linear-gradient(90deg, transparent, var(--gold), transparent);
 }
-
 .tagline{
   max-width:680px;
   margin:0 auto;
@@ -321,12 +270,7 @@ h1{
   line-height:1.75;
   color:var(--muted);
 }
-
-.tagline strong{
-  color:var(--ivory);
-  font-weight:400;
-}
-
+.tagline strong{color:var(--ivory);font-weight:400;}
 .subcopy{
   max-width:620px;
   margin:26px auto 0;
@@ -335,7 +279,6 @@ h1{
   color:var(--gold-soft);
   opacity:.92;
 }
-
 .cta-wrap{
   margin-top:34px;
   width:100%;
@@ -344,7 +287,6 @@ h1{
   position:relative;
   z-index:2;
 }
-
 .signup-shell{
   width:100%;
   max-width:620px;
@@ -355,7 +297,6 @@ h1{
   position:relative;
   z-index:2;
 }
-
 .signup-form{
   display:flex;
   gap:12px;
@@ -365,7 +306,6 @@ h1{
   position:relative;
   z-index:2;
 }
-
 .email-input{
   flex:1 1 300px;
   min-width:280px;
@@ -379,16 +319,11 @@ h1{
   position:relative;
   z-index:2;
 }
-
-.email-input::placeholder{
-  color:#9f967e;
-}
-
+.email-input::placeholder{color:#9f967e;}
 .email-input:focus{
   border-color:rgba(226,201,141,.85);
   box-shadow:0 0 0 3px rgba(201,168,93,.08);
 }
-
 .honeypot{
   position:absolute;
   left:-9999px;
@@ -397,7 +332,6 @@ h1{
   opacity:0;
   pointer-events:none;
 }
-
 .button{
   min-width:220px;
   padding:15px 26px;
@@ -413,20 +347,17 @@ h1{
   position:relative;
   z-index:2;
 }
-
 .button:hover{
   transform:translateY(-1px);
   background:linear-gradient(180deg, rgba(201,168,93,.18), rgba(201,168,93,.07));
   border-color:rgba(226,201,141,.9);
 }
-
 .form-note{
   margin-top:12px;
   font-size:.82rem;
   color:rgba(184,174,152,.82);
   letter-spacing:.04em;
 }
-
 .notice{
   max-width:620px;
   margin-top:18px;
@@ -436,21 +367,9 @@ h1{
   border:1px solid transparent;
   display:none;
 }
-
-.notice.success{
-  background:var(--success-bg);
-  border-color:var(--success-line);
-}
-
-.notice.error{
-  background:var(--error-bg);
-  border-color:var(--error-line);
-}
-
-.notice.show{
-  display:block;
-}
-
+.notice.success{background:var(--success-bg);border-color:var(--success-line);}
+.notice.error{background:var(--error-bg);border-color:var(--error-line);}
+.notice.show{display:block;}
 .footer-note{
   margin-top:28px;
   font-size:.82rem;
@@ -458,47 +377,16 @@ h1{
   text-transform:uppercase;
   color:rgba(184,174,152,.82);
 }
-
-.footer-note span{
-  color:var(--gold-soft);
-}
-
+.footer-note span{color:var(--gold-soft);}
 @media (max-width:640px){
-  body{
-    padding:14px;
-  }
-
-  .content{
-    padding:64px 20px;
-  }
-
-  .frame,
-  .content{
-    min-height:560px;
-  }
-
-  .veil-glow{
-    width:380px;
-    height:380px;
-  }
-
-  .eyebrow{
-    letter-spacing:.28em;
-  }
-
-  .signup-shell{
-    padding:14px;
-  }
-
-  .signup-form{
-    flex-direction:column;
-  }
-
-  .email-input,
-  .button{
-    width:100%;
-    min-width:0;
-  }
+  body{padding:14px;}
+  .content{padding:64px 20px;}
+  .frame,.content{min-height:560px;}
+  .veil-glow{width:380px;height:380px;}
+  .eyebrow{letter-spacing:.28em;}
+  .signup-shell{padding:14px;}
+  .signup-form{flex-direction:column;}
+  .email-input,.button{width:100%;min-width:0;}
 }
 </style>
 </head>
@@ -516,9 +404,7 @@ h1{
     <div class="shimmer"></div>
 
     <p class="eyebrow">You Are Invited</p>
-
     <h1>The Gilded Veil</h1>
-
     <div class="divider"></div>
 
     <p class="tagline">
@@ -534,25 +420,10 @@ h1{
     <div class="cta-wrap">
       <div class="signup-shell">
         <form class="signup-form" action="/signup" method="POST">
-          <input
-            type="text"
-            name="company"
-            class="honeypot"
-            autocomplete="off"
-            tabindex="-1"
-          >
-
-          <input
-            class="email-input"
-            type="email"
-            name="email"
-            placeholder="Enter your email"
-            required
-          >
-
+          <input type="text" name="company" class="honeypot" autocomplete="off" tabindex="-1">
+          <input class="email-input" type="email" name="email" placeholder="Enter your email" required>
           <button class="button" type="submit">Join the Guest List</button>
         </form>
-
         <p class="form-note">No spam. Invitations and early announcements only.</p>
       </div>
     </div>
