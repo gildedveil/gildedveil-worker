@@ -19,7 +19,7 @@ export default {
         const honeypot = (formData.get("company") || "").toString().trim();
 
         console.log("Parsed form data", {
-          hasEmail: !!email,
+          email,
           honeypotFilled: honeypot !== ""
         });
 
@@ -45,9 +45,7 @@ export default {
           "",
           `Email: ${email}`,
           `Submitted: ${submittedAt}`
-        ].join("\\r\\n");
-
-        console.log("Constructing EmailMessage");
+        ].join("\r\n");
 
         const message = new EmailMessage(
           "guestlist@gildedveilco.com",
@@ -70,6 +68,7 @@ export default {
           stack: err?.stack,
           name: err?.name
         });
+
         return redirectWithParam(request.url, "error", "1");
       }
     }
@@ -87,7 +86,7 @@ function redirectWithParam(requestUrl, key, value) {
 }
 
 function isValidEmail(email) {
-  return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function htmlResponse(html) {
