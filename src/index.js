@@ -34,11 +34,16 @@ export default {
         }
 
         const submittedAt = new Date().toISOString();
+        const now = new Date().toUTCString();
+        const messageId = `<${crypto.randomUUID()}@gildedveilco.com>`;
 
         const rawMessage = [
           "From: guestlist@gildedveilco.com",
           "To: gildedveilco@gmail.com",
           "Subject: New Gilded Veil Guest List Signup",
+          `Date: ${now}`,
+          `Message-ID: ${messageId}`,
+          "MIME-Version: 1.0",
           "Content-Type: text/plain; charset=utf-8",
           "",
           "A new guest joined the list.",
@@ -54,7 +59,8 @@ export default {
         );
 
         console.log("Sending email via binding", {
-          bindingExists: !!env.GUESTLIST_EMAIL
+          bindingExists: !!env.GUESTLIST_EMAIL,
+          messageId
         });
 
         await env.GUESTLIST_EMAIL.send(message);
