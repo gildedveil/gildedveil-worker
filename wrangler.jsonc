@@ -2,6 +2,12 @@
   "name": "gildedveil-worker",
   "main": "src/index.js",
   "compatibility_date": "2026-03-08",
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
+  },
   "send_email": [
     {
       "name": "GUESTLIST_EMAIL",
